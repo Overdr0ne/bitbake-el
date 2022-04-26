@@ -757,7 +757,7 @@ For detail, see `comment-dwim'."
 (mmm-add-mode-ext-class 'bitbake-mode "\\.bb\\(append\\|class\\)?\\'" 'bitbake-shell)
 (mmm-add-mode-ext-class 'bitbake-mode "\\.bb\\(append\\|class\\)?\\'" 'bitbake-python)
 (add-to-list 'auto-mode-alist
-             '("\\.bb\\(append\\|class\\)?\\'" . bitbake-mode))
+             '("\\.inc\\|\\.bb\\(append\\|class\\)?\\'" . bitbake-mode))
 
 (provide 'bitbake)
 
