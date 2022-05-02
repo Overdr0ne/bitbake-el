@@ -253,6 +253,8 @@ binary and BUILD-DIRECTORY as the build directory."
     (user-error "No bitbake server running"))
   (message "Bitbake: stopping server")
   (call-process-shell-command (format "bitbake --kill-server --remote-server=%s" (getenv "BBSERVER")))
+  (delete-file (concat (getenv "BBPATH") "bitbake.lock"))
+  (delete-file (concat (getenv "BBPATH") "bitbake.sock"))
   (bitbake-cleanup-environment bitbake-current-poky-directory)
   (message "Bitbake: server is down, cleaning up")
   (setenv "BBSERVER")
