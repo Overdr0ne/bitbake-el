@@ -429,7 +429,7 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
     (with-temp-file taint-file-name
       (insert (bitbake-uuid)))))
 
-(defun bitbake-schedule-queue ()
+(defun bitbake-task-dequeue ()
   "Schedule the next task in queue."
   (when bitbake-current-command
     (message "Bitbake: command \"%s\" finished" bitbake-current-command)
@@ -441,25 +441,25 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
           (if log-file
               (find-file log-file)))))
     (setq bitbake-current-command nil))
-  (message "Bitbake: scheduling queue")
+  (message "Bitbake: queuing next task...")
   (with-current-buffer (bitbake-buffer)
     (let ((task (car bitbake-task-queue)))
       (when task
         (setq bitbake-task-queue (cdr bitbake-task-queue)
               bitbake-current-task task)
-        (add-hook 'comint-redirect-hook 'bitbake-schedule-queue nil t)
+        (add-hook 'comint-redirect-hook 'bitbake-task-dequeue nil t)
         (message "Bitbake: running task")
         (run-at-time 0 nil task))
       (unless task
         (message "Bitbake: task queue empty")
         (setq bitbake-current-task nil)
-        (remove-hook 'comint-redirect-hook 'bitbake-schedule-queue t)
+        (remove-hook 'comint-redirect-hook 'bitbake-task-dequeue t)
         ))))
 
 (defmacro bitbake-command (varlist &rest body)
   "Create a command with VARLIST to execute BODY and put it in the queue."
   (declare (indent 1))
-  `(bitbake-queue-command
+  `(bitbake-task-enqueue
     (lexical-let ,(mapcar (lambda (var)
                             (list var var))
                           varlist)
@@ -467,24 +467,25 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
         (with-current-buffer (bitbake-buffer)
           (condition-case err
               (progn
-                (setq bitbake-current-command nil)
                 (progn ,@body)
-                (unless bitbake-current-command
-                    (bitbake-schedule-queue)))
+		(setq bitbake-current-command nil)
+		(setq bitbake-current-task nil)
+		(bitbake-task-trigger)
+		)
             (error (bitbake-reset-queue)
                    (message "Bitbake: error - %s." (error-message-string err)))))))))
 
-(defun bitbake-run-queue ()
+(defun bitbake-task-trigger ()
   "Maybe run next process in queue if no other task is active."
   (unless bitbake-current-task
     (message "Bitbake: no running tasks, scheduling queue")
-    (bitbake-schedule-queue)))
+    (bitbake-task-dequeue)))
 
-(defun bitbake-queue-command (task)
+(defun bitbake-task-enqueue (task)
   "Queue TASK for running in bitbake buffer."
   (message "Bitbake: queuing command")
   (setq bitbake-task-queue (append bitbake-task-queue (list task)))
-  (bitbake-run-queue))
+  (bitbake-task-trigger))
 
 (defun bitbake-reset-queue ()
   "Reset task queue."
