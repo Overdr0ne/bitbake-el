@@ -273,30 +273,23 @@ binary and BUILD-DIRECTORY as the build directory."
     (when process (kill-process process))
     (when buffer (kill-buffer buffer))))
 
-(defun bitbake-parse-recipes (buffer)
-  "Parse recipes in a BUFFER given EVENT."
-  (with-current-buffer buffer
-    (goto-char (point-min))
-    (let ((recipes))
-      (while (re-search-forward "^\\([^[:blank:]]+\\) +\\([[:digit:]]*\\):\\([^[:blank:]]+\\)-\\([^[:blank:]]+\\)" nil t)
-          (setq recipes (cons (list (match-string 1) (match-string 2) (match-string 3) (match-string 4)) recipes)))
-        recipes)))
-
 (defun bitbake-s-command (command message)
   "Run COMMAND synchronously, sending output to bitbake-capture-buffer.
 
 If COMMAND fails, raise user error with MESSAGE."
-  (unless (zerop (shell-command command (bitbake-capture-buffer)))
-    (user-error "%s: %s" message
-                (if (getenv "BBSERVER")
-                    (buffer-string) "server is not started"))))
+  (if (getenv "BBSERVER")
+      (shell-command command (bitbake-capture-buffer) nil)
+    (user-error "Server not started")))
 
 (defun bitbake-fetch-recipes ()
   "Fetch the availables bitbake recipes for the POKY-DIRECTORY and the BUILD-DIRECTORY."
   (message "Bitbake: fetching recipes")
   (with-current-buffer (bitbake-capture-buffer)
     (bitbake-s-command "bitbake -s 2>&1" "Unable to fetch recipes")
-    (bitbake-parse-recipes (current-buffer))))
+    (mapcar (lambda (entry)
+	      (when (cl-every #'identity (split-string entry))
+		(split-string entry)))
+	    (cl-subseq (split-string (buffer-string) "\\\n") 3))))
 
 (defun bitbake-recipes (&optional fetch)
   "Return the bitbake recipes list.
@@ -312,18 +305,16 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
 
 (defun bitbake-recipe-names ()
   "Return the list of available recipe names."
-  (let (names)
-    (dolist (recipe (bitbake-recipes) names)
-      (setq names (cons (car recipe) names)))))
+  (mapcar (lambda (entry) (when (car entry) (car entry))) (bitbake-recipes)))
 
 (defun bitbake-buffer-recipe (&optional buffer)
   "Return a recipe name for the current buffer or BUFFER if given."
   (setq buffer (or buffer (current-buffer)))
   (when (stringp (buffer-file-name buffer))
     (let ((bitbake-directory (locate-dominating-file (buffer-file-name buffer)
-                                                (lambda (dir)
-                                                  (and (file-directory-p dir)
-                                                       (directory-files dir t "\\.bb\\(append\\)?\\'"))))))
+                                                     (lambda (dir)
+                                                       (and (file-directory-p dir)
+							    (directory-files dir t "\\.bb\\(append\\)?\\'"))))))
       (when bitbake-directory
         (let ((bitbake-file (car (directory-files bitbake-directory t "[^/_]+\\(_[^_]+\\)?\\.bb\\(append\\)?\\'"))))
           (with-temp-buffer
