@@ -392,7 +392,7 @@ If FETCH is non-nil, invalidate cache and fetch the tasks again."
 
 (defun bitbake-fetch-recipe-variables (recipe)
   "Fetch bitbake variables for RECIPE."
-    (message "Bittbake: fetching recipe %s variables" recipe)
+  (message "Bittbake: fetching recipe %s variables" recipe)
   (with-temp-buffer
     (shell-command (format "bitbake -e %s 2>&1" recipe) (current-buffer))
     (bitbake-parse-recipe-variables (current-buffer))))
@@ -415,13 +415,13 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
 (defun bitbake-uuid ()
   "Generate a random UUID."
   (format "%04x%04x-%04x-%04x-%04x-%06x%06x"
-           (random (expt 16 4))
-           (random (expt 16 4))
-           (random (expt 16 4))
-           (random (expt 16 4))
-           (random (expt 16 4))
-           (random (expt 16 6))
-           (random (expt 16 6))))
+          (random (expt 16 4))
+          (random (expt 16 4))
+          (random (expt 16 4))
+          (random (expt 16 4))
+          (random (expt 16 4))
+          (random (expt 16 6))
+          (random (expt 16 6))))
 
 (defun bitbake-recipe-taint-task (recipe task)
   "Taint RECIPE TASK as a workarround for bitbake -f not working in server mode."
@@ -609,17 +609,17 @@ If FORCE is non-nil, force rebuild of image,"
         (deploy (bitbake-recipe-variable "DEPLOY_DIR_IMAGE" image))
         (last-prompt (process-mark (get-buffer-process (bitbake-buffer)))))
     (bitbake-command (wks rootfs staging-data kernel native-sysroot deploy)
-                     (bitbake-shell-command (format "wic create %s -r %s -b %s -k %s -n %s -o %s"
-                                                    wks rootfs staging-data kernel native-sysroot deploy)))
+      (bitbake-shell-command (format "wic create %s -r %s -b %s -k %s -n %s -o %s"
+                                     wks rootfs staging-data kernel native-sysroot deploy)))
     (bitbake-command ()
-                     (let (disk-image)
-                       (with-current-buffer (bitbake-capture-buffer)
-                         (goto-char (point-min))
-                         (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
-                           (error "Unable to execute wic command, see *bitbake* for details"))
-                         (setq disk-image (match-string 1)))
-                       (message "Disk image %s created" disk-image)
-                       (setq bitbake-last-disk-image disk-image)))))
+      (let (disk-image)
+        (with-current-buffer (bitbake-capture-buffer)
+          (goto-char (point-min))
+          (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
+            (error "Unable to execute wic command, see *bitbake* for details"))
+          (setq disk-image (match-string 1)))
+        (message "Disk image %s created" disk-image)
+        (setq bitbake-last-disk-image disk-image)))))
 
 ;;;###autoload
 (defun bitbake-hdd-image (wks image)
