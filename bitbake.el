@@ -431,16 +431,6 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
 
 (defun bitbake-task-dequeue ()
   "Schedule the next task in queue."
-  (when bitbake-current-command
-    (message "Bitbake: command \"%s\" finished" bitbake-current-command)
-    (with-current-buffer (bitbake-capture-buffer)
-      (goto-char (point-min))
-      (while (re-search-forward "^[| ]*ERROR: \\([^(]+\\)\\( (log file is located at \\(.*\\))\\)?$" nil t)
-        (message "Bitbake: error - %s" (match-string 1))
-        (let ((log-file (match-string 3)))
-          (if log-file
-              (find-file log-file)))))
-    (setq bitbake-current-command nil))
   (message "Bitbake: queuing next task...")
   (with-current-buffer (bitbake-buffer)
     (let ((task (car bitbake-task-queue)))
@@ -449,15 +439,23 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
               bitbake-current-task task)
         (add-hook 'comint-redirect-hook 'bitbake-task-dequeue nil t)
         (message "Bitbake: running task")
-        (run-at-time 0 nil task))
-      (unless task
-        (message "Bitbake: task queue empty")
-        (setq bitbake-current-task nil)
-        (remove-hook 'comint-redirect-hook 'bitbake-task-dequeue t)
-        ))))
+        (run-at-time 0 nil task)))))
 
-(defmacro bitbake-command (varlist &rest body)
-  "Create a command with VARLIST to execute BODY and put it in the queue."
+(defun bitbake-task-cleanup ()
+  "Cleanup the previous task."
+  (message "Bitbake: command \"%s\" finished" bitbake-current-command)
+  (setq bitbake-current-command nil)
+  (setq bitbake-current-task nil)
+  (with-current-buffer (bitbake-capture-buffer)
+    (goto-char (point-min))
+    (while (re-search-forward "^[| ]*ERROR: \\([^(]+\\)\\( (log file is located at \\(.*\\))\\)?$" nil t)
+      (message "Bitbake: error - %s" (match-string 1))
+      (let ((log-file (match-string 3)))
+        (if log-file
+            (find-file log-file))))))
+
+(defmacro bitbake-command-enqueue (varlist &rest body)
+  "Put command with VARLIST and BODY in the queue."
   (declare (indent 1))
   `(bitbake-task-enqueue
     (lexical-let ,(mapcar (lambda (var)
@@ -468,18 +466,19 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
           (condition-case err
               (progn
                 (progn ,@body)
-		(setq bitbake-current-command nil)
-		(setq bitbake-current-task nil)
-		(bitbake-task-trigger)
-		)
+		(bitbake-task-cleanup)
+		(bitbake-task-trigger))
             (error (bitbake-reset-queue)
                    (message "Bitbake: error - %s." (error-message-string err)))))))))
 
 (defun bitbake-task-trigger ()
   "Maybe run next process in queue if no other task is active."
-  (unless bitbake-current-task
-    (message "Bitbake: no running tasks, scheduling queue")
-    (bitbake-task-dequeue)))
+  (if bitbake-task-queue
+      (unless bitbake-current-task
+	(message "Bitbake: no running tasks, scheduling queue")
+	(bitbake-task-dequeue))
+    (message "Bitbake: task queue empty")
+    (remove-hook 'comint-redirect-hook 'bitbake-task-dequeue t)))
 
 (defun bitbake-task-enqueue (task)
   "Queue TASK for running in bitbake buffer."
@@ -501,7 +500,7 @@ If FORCE is non-nil, force running the task."
   (interactive (let* ((recipe (bitbake-read-recipe))
                       (task (bitbake-read-tasks recipe)))
                  (list task recipe (consp current-prefix-arg))))
-  (bitbake-command (recipe task force)
+  (bitbake-command-enqueue (recipe task force)
     (when force
       (bitbake-recipe-taint-task recipe task))
     (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if force "-f" "") task))))
@@ -510,7 +509,7 @@ If FORCE is non-nil, force running the task."
 (defun bitbake-recipe (recipe)
   "Run bitbake RECIPE."
   (interactive (list (bitbake-read-recipe)))
-  (bitbake-command (recipe)
+  (bitbake-command-enqueue (recipe)
     (bitbake-shell-command (format "bitbake %s " recipe))))
 
 ;;;###autoload
@@ -549,7 +548,7 @@ If FORCE is non-nil, force running the task."
 (defun bitbake-deploy (recipe)
   "Deploy artifacts of RECIPE to bitbake-deploy-ssh host."
   (interactive (list (bitbake-read-recipe)))
-  (bitbake-command (recipe)
+  (bitbake-command-enqueue (recipe)
     (let ((image (bitbake-recipe-variable "D" recipe)))
       (message "Duma: deploying %s" recipe)
       (bitbake-shell-command (format "tar -C %s -cf - . | ssh %s tar -C / -xf -" image bitbake-deploy-ssh-host)))))
@@ -567,7 +566,7 @@ If FORCE is non-nil, force running the task."
 
 If FORCE is non-nil, force rebuild of image,"
   (interactive (list (bitbake-read-image) (consp current-prefix-arg)))
-  (bitbake-command (image force)
+  (bitbake-command-enqueue (image force)
     (when force
       (bitbake-recipe-taint-task image "rootfs"))
     (bitbake-shell-command (format "bitbake %s" image))))
@@ -609,18 +608,18 @@ If FORCE is non-nil, force rebuild of image,"
         (native-sysroot (bitbake-recipe-variable "STAGING_DIR_NATIVE" image))
         (deploy (bitbake-recipe-variable "DEPLOY_DIR_IMAGE" image))
         (last-prompt (process-mark (get-buffer-process (bitbake-buffer)))))
-    (bitbake-command (wks rootfs staging-data kernel native-sysroot deploy)
+    (bitbake-command-enqueue (wks rootfs staging-data kernel native-sysroot deploy)
       (bitbake-shell-command (format "wic create %s -r %s -b %s -k %s -n %s -o %s"
-                                     wks rootfs staging-data kernel native-sysroot deploy)))
-    (bitbake-command ()
+				     wks rootfs staging-data kernel native-sysroot deploy)))
+    (bitbake-command-enqueue ()
       (let (disk-image)
-        (with-current-buffer (bitbake-capture-buffer)
-          (goto-char (point-min))
-          (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
-            (error "Unable to execute wic command, see *bitbake* for details"))
-          (setq disk-image (match-string 1)))
-        (message "Disk image %s created" disk-image)
-        (setq bitbake-last-disk-image disk-image)))))
+	(with-current-buffer (bitbake-capture-buffer)
+	  (goto-char (point-min))
+	  (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
+	    (error "Unable to execute wic command, see *bitbake* for details"))
+	  (setq disk-image (match-string 1)))
+	(message "Disk image %s created" disk-image)
+	(setq bitbake-last-disk-image disk-image)))))
 
 ;;;###autoload
 (defun bitbake-hdd-image (wks image)
@@ -638,7 +637,7 @@ The hdd image is based on WKS definition file and bitbake IMAGE, see bitbake-hdd
   (interactive (list (wic-read-definition-file)
                      (bitbake-read-image)))
   (bitbake-hdd-image wks image)
-  (bitbake-command ()
+  (bitbake-command-enqueue ()
     (when (and (file-exists-p bitbake-flash-device) bitbake-last-disk-image)
       (message "Bitbake: copy image to %s" bitbake-flash-device)
       (bitbake-shell-command (format "dd if=%s of=%s bs=32M" bitbake-last-disk-image bitbake-flash-device)))))
