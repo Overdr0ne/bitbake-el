@@ -99,6 +99,12 @@ If a relative path is used, it will be relative to the poky directory."
   :type '(string)
   :version "24.1")
 
+(defcustom bitbake-image-path nil
+  "The path to the bitbake image."
+  :group 'bitbake
+  :type '(string)
+  :version "24.1")
+
 (defcustom bitbake-flash-device nil
   "The device file where to dd the hdd image.
 
@@ -331,10 +337,10 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
 
 (defun bitbake-image-names ()
   "Return the list of available image names."
-  (let (names)
-    (dolist (recipe (bitbake-recipes) names)
-      (if (string-match ".*-image\\(-.*\\|$\\)" (car recipe))
-          (setq names (cons (car recipe) names))))))
+  (seq-filter (lambda (recipe)
+		(when (stringp (first recipe))
+		  (string-match-p ".*-image\\(-.*\\|$\\)" (first recipe))))
+	      (bitbake-recipes)))
 
 (defun bitbake-read-image ()
   "Read a image name in the minibuffer, with completion."
@@ -630,17 +636,36 @@ If FORCE is non-nil, force rebuild of image,"
   (bitbake-wic-create wks image))
 
 ;;;###autoload
-(defun bitbake-flash-image (wks image)
-  "Create an hdd image using wic and flash it on bitbake-flash-device.
+(defun bitbake-read-wic ()
+  "Read a IMAGE in the minibuffer, with completion."
+  (read-file-name "Image: "
+		  (if bitbake-image-path
+		      bitbake-image-path
+		    (concat (first (file-expand-wildcards (concat (getenv "BBPATH") "tmp*/deploy/images*") t)) "/"))
+		  nil
+		  nil
+		  nil
+		  (lambda (filename) (or (string-match-p "wic" filename)
+					 (string-match-p "/" filename)))))
 
-The hdd image is based on WKS definition file and bitbake IMAGE, see bitbake-hdd-image."
-  (interactive (list (wic-read-definition-file)
-                     (bitbake-read-image)))
-  (bitbake-hdd-image wks image)
-  (bitbake-command-enqueue ()
-    (when (and (file-exists-p bitbake-flash-device) bitbake-last-disk-image)
-      (message "Bitbake: copy image to %s" bitbake-flash-device)
-      (bitbake-shell-command (format "dd if=%s of=%s bs=32M" bitbake-last-disk-image bitbake-flash-device)))))
+;;;###autoload
+(defun bitbake-read-device ()
+  "Read a DEVICE in the minibuffer, with completion."
+  (read-file-name "Device: "
+		  (if bitbake-flash-device
+		      bitbake-flash-device
+		    "/dev/") nil nil "sd"))
+
+;;;###autoload
+(defun bitbake-flash (image device)
+  "Flash IMAGE to DEVICE."
+  (interactive (list (bitbake-read-wic)
+		     (bitbake-read-device)))
+  (with-temp-buffer
+    (setq image (expand-file-name image))
+    (cd "/sudo::/")
+    (shell-command (concat "umount " device "*"))
+    (async-shell-command (concat "bmaptool copy " image " " device))))
 
 ;;; Mode definition
 
