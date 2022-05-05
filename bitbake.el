@@ -579,6 +579,21 @@ If FORCE is non-nil, force rebuild of image,"
       (bitbake-recipe-taint-task image "rootfs"))
     (bitbake-shell-command (format "bitbake %s" image))))
 
+(defun bitbake-get-ev-buffer ()
+  "Get/create a buffer for displaying the bitbake environement."
+  (let ((buf (get-buffer-create "*bitbake-environment*")))
+    (with-current-buffer buf
+      (sh-mode)
+      (display-buffer buf)
+      buf)))
+;;;###autoload
+(defun bitbake-environment (recipe)
+  "Run bitbake RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-command-enqueue (recipe)
+    (bitbake-shell-command (format "bitbake -e %s" recipe)
+			   (bitbake-get-ev-buffer))))
+
 (defun bitbake-workdir (recipe)
   "Open RECIPE workdir."
   (interactive (list (bitbake-read-recipe)))
