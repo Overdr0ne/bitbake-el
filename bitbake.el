@@ -481,7 +481,8 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
   "Maybe run next process in queue if no other task is active."
   (if bitbake-task-queue
       (unless bitbake-current-task
-	(message "Bitbake: no running tasks, scheduling queue")
+	(message "Bitbake: triggering next task")
+	(display-buffer (bitbake-buffer))
 	(bitbake-task-dequeue))
     (message "Bitbake: task queue empty")
     (remove-hook 'comint-redirect-hook 'bitbake-task-dequeue t)))
