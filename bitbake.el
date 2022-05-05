@@ -203,17 +203,18 @@ here.  Calling bitbake-flash will copy the hdd image on the usb disk if present.
   (bitbake-remove-path (format "%sscripts" poky-directory))
   (bitbake-remove-path (format "%sbitbake/bin" poky-directory)))
 
-(defun bitbake-shell-command (command)
+(defun bitbake-shell-command (command &optional capture-buffer)
   "Run shell COMMAND in bitbake buffer.
 
-Capture output in *bitbake-temp*."
-  (with-current-buffer (bitbake-capture-buffer)
-    (setq-local comint-prompt-regexp bitbake-buffer-prompt-regexp)
-    (erase-buffer))
-  (with-current-buffer (bitbake-buffer)
-    (setq-local comint-prompt-regexp bitbake-buffer-prompt-regexp)
-    (setq bitbake-current-command command)
-    (comint-redirect-send-command (format "echo '%s' && %s 2>&1" command command) (bitbake-capture-buffer) t t)))
+Capture output in CAPTURE-BUFFER."
+  (let ((capture-buffer (if capture-buffer capture-buffer (bitbake-capture-buffer))))
+    (with-current-buffer capture-buffer
+      (setq-local comint-prompt-regexp bitbake-buffer-prompt-regexp)
+      (erase-buffer))
+    (with-current-buffer (bitbake-buffer)
+      (setq-local comint-prompt-regexp bitbake-buffer-prompt-regexp)
+      (setq bitbake-current-command command)
+      (comint-redirect-send-command (format "echo '%s' && %s 2>&1" command command) capture-buffer t t))))
 
 ;;;###autoload
 (defun bitbake-start-server (poky-directory build-directory)
