@@ -662,7 +662,8 @@ If FORCE is non-nil, force rebuild of image,"
 		  nil
 		  nil
 		  nil
-		  (lambda (filename) (or (string-match-p "wic" filename)
+		  (lambda (filename) (or (and (string-match-p "wic" filename)
+					      (string-match-p "bz2" filename))
 					 (string-match-p "/" filename)))))
 
 ;;;###autoload
@@ -671,7 +672,7 @@ If FORCE is non-nil, force rebuild of image,"
   (read-file-name "Device: "
 		  (if bitbake-flash-device
 		      bitbake-flash-device
-		    "/dev/") nil nil "sd"))
+		    "/dev/")))
 
 ;;;###autoload
 (defun bitbake-flash (image device)
