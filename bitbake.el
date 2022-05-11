@@ -698,8 +698,9 @@ If FORCE is non-nil, force rebuild of image,"
   (define-key bitbake-minor-mode-map (kbd "C-c C-/ r") 'bitbake-recompile)
   (define-key bitbake-minor-mode-map (kbd "C-c C-/ d") 'bitbake-recompile-deploy)
   (define-key bitbake-minor-mode-map (kbd "C-c C-/ f") 'bitbake-flash-image)
-  (define-key bitbake-minor-mode-map (kbd "C-c C-/ t") 'bitbake-task)
-  (easy-menu-define bitbake-menu bitbake-minor-mode-map
+  (define-key bitbake-minor-mode-map (kbd "C-c C-/ t") 'bitbake-task))
+
+(easy-menu-define bitbake-menu bitbake-minor-mode-map
     "BitBake"
     '("BitBake"
       ["Start server"   bitbake-start-server]
@@ -718,7 +719,11 @@ If FORCE is non-nil, force rebuild of image,"
        ["build"         bitbake-image]
        ["wic"           bitbake-wic-create]
        ["hdd"           bitbake-hdd-image]
-       ["flash"         bitbake-flash-image]))))
+       ["flash"         bitbake-flash-image])))
+(defun bitbake-tmm-menu ()
+    "Display tmm menu for bitbake."
+    (interactive)
+    (tmm-prompt bitbake-menu))
 
 (define-minor-mode bitbake-minor-mode
   "Toggle Bitake mode.
