@@ -174,7 +174,10 @@ here.  Calling bitbake-flash will copy the hdd image on the usb disk if present.
 
 (defun bitbake-capture-buffer ()
   "Fetch or create the bitbake capture buffer."
-  (get-buffer-create "*bitbake-temp*"))
+  (let ((buffer (get-buffer-create "*bitbake-temp*")))
+    (with-current-buffer buffer
+      (text-mode)
+      buffer)))
 
 (defun bitbake-add-path (path)
   "Add PATH to the current path."
@@ -583,7 +586,7 @@ If FORCE is non-nil, force rebuild of image,"
   "Get/create a buffer for displaying the bitbake environement."
   (let ((buf (get-buffer-create "*bitbake-environment*")))
     (with-current-buffer buf
-      (sh-mode)
+      (shell-script-mode)
       (display-buffer buf)
       buf)))
 ;;;###autoload
