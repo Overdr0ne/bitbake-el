@@ -219,6 +219,13 @@ Capture output in CAPTURE-BUFFER."
       (setq bitbake-current-command command)
       (comint-redirect-send-command (format "echo '%s' && %s 2>&1" command command) capture-buffer t t))))
 
+(defun bitbake-clear-caches ()
+  "Clear all bitbake caches."
+  (interactive)
+  (setq bitbake-recipes-cache '()
+        bitbake-recipe-variables-cache '()
+        bitbake-recipe-tasks-cache '()))
+
 ;;;###autoload
 (defun bitbake-start-server (poky-directory build-directory)
   "Start a bitbake server instance.
