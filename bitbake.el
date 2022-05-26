@@ -668,7 +668,7 @@ If FORCE is non-nil, force rebuild of image,"
   (read-file-name "Image: "
 		  (if bitbake-image-path
 		      bitbake-image-path
-		    (concat (first (file-expand-wildcards (concat (getenv "BBPATH") "tmp*/deploy/images*") t)) "/"))
+		    (concat (first (file-expand-wildcards (concat (getenv "BBPATH") "tmp*/deploy/images*") t)) "/."))
 		  nil
 		  nil
 		  nil
@@ -682,7 +682,7 @@ If FORCE is non-nil, force rebuild of image,"
   (read-file-name "Device: "
 		  (if bitbake-flash-device
 		      bitbake-flash-device
-		    "/dev/")))
+		    "/dev/.")))
 
 ;;;###autoload
 (defun bitbake-flash (image device)
