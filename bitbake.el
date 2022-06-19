@@ -116,6 +116,7 @@ here.  Calling bitbake-flash will copy the hdd image on the usb disk if present.
   :version "24.1")
 
 ;;; Local variables
+(defvar bitbake-force nil "Global variable dictating whether or not to force tasks.")
 (defvar bitbake-current-server-host nil "The actual host name or IP address of the bitbake server instance.")
 (defvar bitbake-current-server-port nil "The actual port of the bitbake server instance.")
 (defvar bitbake-current-poky-directory nil "The actual directory holding bitbake binaries.")
@@ -136,6 +137,11 @@ here.  Calling bitbake-flash will copy the hdd image on the usb disk if present.
 (make-variable-buffer-local 'bitbake-last-disk-image)
 
 ;;; Minor mode functions
+
+(defun bitbake-toggle-force ()
+  "Toggle the `bitbake-force' variable."
+  (interactive)
+  (setq bitbake-force (not bitbake-force)))
 
 (defun bitbake-read-poky-directory ()
   "Read the poky directory."
@@ -511,17 +517,15 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
         bitbake-current-task nil))
 
 ;;;###autoload
-(defun bitbake-task (task recipe &optional force)
-  "Run bitbake TASK on RECIPE.
-
-If FORCE is non-nil, force running the task."
+(defun bitbake-task (task recipe)
+  "Run bitbake TASK on RECIPE."
   (interactive (let* ((recipe (bitbake-read-recipe))
                       (task (bitbake-read-tasks recipe)))
-                 (list task recipe (consp current-prefix-arg))))
-  (bitbake-command-enqueue (recipe task force)
-    (when force
+                 (list task recipe)))
+  (bitbake-command-enqueue (recipe task)
+    (when bitbake-force
       (bitbake-recipe-taint-task recipe task))
-    (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if force "-f" "") task))))
+    (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task))))
 
 ;;;###autoload
 (defun bitbake-recipe (recipe)
@@ -579,13 +583,11 @@ If FORCE is non-nil, force running the task."
   (bitbake-deploy recipe))
 
 ;;;###autoload
-(defun bitbake-image (image &optional force)
-  "Run bitbake IMAGE.
-
-If FORCE is non-nil, force rebuild of image,"
-  (interactive (list (bitbake-read-image) (consp current-prefix-arg)))
-  (bitbake-command-enqueue (image force)
-    (when force
+(defun bitbake-image (image)
+  "Run bitbake IMAGE."
+  (interactive (list (bitbake-read-image)))
+  (bitbake-command-enqueue (image)
+    (when bitbake-force
       (bitbake-recipe-taint-task image "rootfs"))
     (bitbake-shell-command (format "bitbake %s" image))))
 
