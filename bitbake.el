@@ -225,6 +225,11 @@ Capture output in CAPTURE-BUFFER."
       (setq bitbake-current-command command)
       (comint-redirect-send-command (format "echo '%s' && %s 2>&1" command command) capture-buffer t t))))
 
+(defun bitbake-raw (argument-string &optional capture-buffer)
+  "Call bitbake with raw ARGUMENT-STRING in CAPTURE-BUFFER."
+  (interactive "sBitbake arguments: ")
+  (bitbake-shell-command (string-join (list "bitbake" argument-string) " ") capture-buffer))
+
 (defun bitbake-clear-caches ()
   "Clear all bitbake caches."
   (interactive)
