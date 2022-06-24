@@ -141,7 +141,10 @@ here.  Calling bitbake-flash will copy the hdd image on the usb disk if present.
 (defun bitbake-toggle-force ()
   "Toggle the `bitbake-force' variable."
   (interactive)
-  (setq bitbake-force (not bitbake-force)))
+  (setq bitbake-force (not bitbake-force))
+  (if bitbake-force
+      (message "Bitbake: Force enabled")
+    (message "Bitbake: Force disabled")))
 
 (defun bitbake-read-poky-directory ()
   "Read the poky directory."
