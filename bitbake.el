@@ -568,7 +568,7 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
 
 ;;;###autoload
 (defun bitbake-fetch (recipe)
-  "Run bitbake install on RECIPE."
+  "Run bitbake fetch on RECIPE."
   (interactive (list (bitbake-read-recipe)))
   (bitbake-task "fetch" recipe t))
 
