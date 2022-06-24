@@ -317,10 +317,16 @@ If COMMAND fails, raise user error with MESSAGE."
   (message "Bitbake: fetching recipes")
   (with-current-buffer (bitbake-capture-buffer)
     (bitbake-s-command "bitbake -s 2>&1" "Unable to fetch recipes")
-    (mapcar (lambda (entry)
-	      (when (cl-every #'identity (split-string entry))
-		(split-string entry)))
-	    (cl-subseq (split-string (buffer-string) "\\\n") 3))))
+    (let ((start (progn (re-search-forward "===========")
+			(1+ (line-end-position))))
+	  (end (progn (re-search-forward "Summary:")
+		      (1- (line-beginning-position)))))
+      (mapcar (lambda (entry)
+		(when (cl-every #'identity (split-string entry))
+		  (split-string entry)))
+	      (split-string (buffer-substring-no-properties start
+							    end)
+			    "\\\n")))))
 
 (defun bitbake-recipes (&optional fetch)
   "Return the bitbake recipes list.
