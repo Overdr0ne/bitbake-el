@@ -531,15 +531,18 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
         bitbake-current-task nil))
 
 ;;;###autoload
-(defun bitbake-task (task recipe)
-  "Run bitbake TASK on RECIPE."
+(defun bitbake-task (task recipe &optional force)
+  "Run bitbake TASK on RECIPE.
+
+Force the task if FORCE is t."
   (interactive (let* ((recipe (bitbake-read-recipe))
                       (task (bitbake-read-tasks recipe)))
-                 (list task recipe)))
-  (bitbake-command-enqueue (recipe task)
-    (when bitbake-force
-      (bitbake-recipe-taint-task recipe task))
-    (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task))))
+                 (list task recipe force)))
+  (let ((bitbake-force (if force force bitbake-force)))
+    (bitbake-command-enqueue (recipe task)
+     (when bitbake-force
+       (bitbake-recipe-taint-task recipe task))
+     (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task)))))
 
 ;;;###autoload
 (defun bitbake-recipe (recipe)
