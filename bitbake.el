@@ -819,6 +819,7 @@ For detail, see `comment-dwim'."
   :syntax-table bitbake-syntax-table
   (setq font-lock-defaults bitbake-font-lock-defaults)
   (setq mode-name "BitBake")
+  (setq comment-start "# ")
   (set (make-local-variable 'indent-line-function) 'bitbake-indent-line)
   (define-key bitbake-mode-map [remap comment-dwim] 'bitbake-comment-dwim))
 
