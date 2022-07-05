@@ -614,6 +614,12 @@ Force the task if FORCE is t."
   (interactive)
   (bitbake-shell-command (format "bitbake world -c cleanall --continue")))
 
+;;;###autoload
+(defun bitbake-dependency-graph (recipe)
+  "Get bitbake dependency graph for RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-shell-command (format "bitbake -g %s -u taskexp" recipe)))
+
 (defun bitbake-get-ev-buffer ()
   "Get/create a buffer for displaying the bitbake environement."
   (let ((buf (get-buffer-create "*bitbake-environment*")))
