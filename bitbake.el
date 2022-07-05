@@ -608,6 +608,12 @@ Force the task if FORCE is t."
       (bitbake-recipe-taint-task image "rootfs"))
     (bitbake-shell-command (format "bitbake %s" image))))
 
+;;;###autoload
+(defun bitbake-cleanall ()
+  "Get bitbake dependency graph for RECIPE."
+  (interactive)
+  (bitbake-shell-command (format "bitbake world -c cleanall --continue")))
+
 (defun bitbake-get-ev-buffer ()
   "Get/create a buffer for displaying the bitbake environement."
   (let ((buf (get-buffer-create "*bitbake-environment*")))
