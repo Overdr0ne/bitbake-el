@@ -540,9 +540,9 @@ Force the task if FORCE is t."
                  (list task recipe force)))
   (let ((bitbake-force (if force force bitbake-force)))
     (bitbake-command-enqueue (recipe task)
-     (when bitbake-force
-       (bitbake-recipe-taint-task recipe task))
-     (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task)))))
+      (when bitbake-force
+	(bitbake-recipe-taint-task recipe task))
+      (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task)))))
 
 ;;;###autoload
 (defun bitbake-recipe (recipe)
@@ -742,29 +742,29 @@ Force the task if FORCE is t."
   (define-key bitbake-minor-mode-map (kbd "C-c C-/ t") 'bitbake-task))
 
 (easy-menu-define bitbake-menu bitbake-minor-mode-map
-    "BitBake"
-    '("BitBake"
-      ["Start server"   bitbake-start-server]
-      ["Stop server"    bitbake-stop-server ]
-      ["Recipe"         bitbake-recipe]
-      ["Task"           bitbake-task]
-      ("Tasks"
-       ["clean"         bitbake-clean]
-       ["compile"       bitbake-compile]
-       ["install"       bitbake-install]
-       ["fetch"         bitbake-fetch]
-       ["recompile"     bitbake-recompile]
-       ["deploy"        bitbake-deploy]
-       ["recompile, deploy" bitbake-recompile-deploy])
-      ("Image"
-       ["build"         bitbake-image]
-       ["wic"           bitbake-wic-create]
-       ["hdd"           bitbake-hdd-image]
-       ["flash"         bitbake-flash-image])))
+  "BitBake"
+  '("BitBake"
+    ["Start server"   bitbake-start-server]
+    ["Stop server"    bitbake-stop-server ]
+    ["Recipe"         bitbake-recipe]
+    ["Task"           bitbake-task]
+    ("Tasks"
+     ["clean"         bitbake-clean]
+     ["compile"       bitbake-compile]
+     ["install"       bitbake-install]
+     ["fetch"         bitbake-fetch]
+     ["recompile"     bitbake-recompile]
+     ["deploy"        bitbake-deploy]
+     ["recompile, deploy" bitbake-recompile-deploy])
+    ("Image"
+     ["build"         bitbake-image]
+     ["wic"           bitbake-wic-create]
+     ["hdd"           bitbake-hdd-image]
+     ["flash"         bitbake-flash-image])))
 (defun bitbake-tmm-menu ()
-    "Display tmm menu for bitbake."
-    (interactive)
-    (tmm-prompt bitbake-menu))
+  "Display tmm menu for bitbake."
+  (interactive)
+  (tmm-prompt bitbake-menu))
 
 (define-minor-mode bitbake-minor-mode
   "Toggle Bitake mode.
