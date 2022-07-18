@@ -588,6 +588,12 @@ Force the task if FORCE is t."
   (bitbake-task "fetch" recipe t))
 
 ;;;###autoload
+(defun bitbake-package (recipe)
+  "Run bitbake package on RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-task "package" recipe t))
+
+;;;###autoload
 (defun bitbake-recompile (recipe)
   "Run bitbake clean compile and install on RECIPE."
   (interactive (list (bitbake-read-recipe)))
