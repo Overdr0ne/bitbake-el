@@ -570,6 +570,12 @@ Force the task if FORCE is t."
   (bitbake-task "compile" recipe t))
 
 ;;;###autoload
+(defun bitbake-devshell (recipe)
+  "Run bitbake devshell on RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-task "devshell" recipe t))
+
+;;;###autoload
 (defun bitbake-install (recipe)
   "Run bitbake install on RECIPE."
   (interactive (list (bitbake-read-recipe)))
