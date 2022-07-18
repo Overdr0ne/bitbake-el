@@ -594,6 +594,12 @@ Force the task if FORCE is t."
   (bitbake-task "package" recipe t))
 
 ;;;###autoload
+(defun bitbake-prepare (recipe)
+  "Run bitbake prepare on RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-task "prepare" recipe t))
+
+;;;###autoload
 (defun bitbake-recompile (recipe)
   "Run bitbake clean compile and install on RECIPE."
   (interactive (list (bitbake-read-recipe)))
