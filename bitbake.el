@@ -558,6 +558,12 @@ Force the task if FORCE is t."
   (bitbake-task "clean" recipe t))
 
 ;;;###autoload
+(defun bitbake-cleanall (recipe)
+  "Run bitbake clean on RECIPE."
+  (interactive (list (bitbake-read-recipe)))
+  (bitbake-task "cleanall" recipe t))
+
+;;;###autoload
 (defun bitbake-compile (recipe)
   "Run bitbake compile on RECIPE."
   (interactive (list (bitbake-read-recipe)))
@@ -609,7 +615,7 @@ Force the task if FORCE is t."
     (bitbake-shell-command (format "bitbake %s" image))))
 
 ;;;###autoload
-(defun bitbake-cleanall ()
+(defun bitbake-cleanall-world ()
   "Get bitbake dependency graph for RECIPE."
   (interactive)
   (bitbake-shell-command (format "bitbake world -c cleanall --continue")))
