@@ -318,15 +318,15 @@ If COMMAND fails, raise user error with MESSAGE."
   (with-current-buffer (bitbake-capture-buffer)
     (bitbake-s-command "bitbake -s 2>&1" "Unable to fetch recipes")
     (let ((start (progn (re-search-forward "===========")
-			(1+ (line-end-position))))
-	  (end (progn (re-search-forward "Summary:")
-		      (1- (line-beginning-position)))))
+                        (1+ (line-end-position))))
+          (end (progn (re-search-forward "Summary:")
+                      (1- (line-beginning-position)))))
       (mapcar (lambda (entry)
-		(when (cl-every #'identity (split-string entry))
-		  (split-string entry)))
-	      (split-string (buffer-substring-no-properties start
-							    end)
-			    "\\\n")))))
+                (when (cl-every #'identity (split-string entry))
+                  (split-string entry)))
+              (split-string (buffer-substring-no-properties start
+                                                            end)
+                            "\\\n")))))
 
 (defun bitbake-recipes (&optional fetch)
   "Return the bitbake recipes list.
@@ -351,7 +351,7 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
     (let ((bitbake-directory (locate-dominating-file (buffer-file-name buffer)
                                                      (lambda (dir)
                                                        (and (file-directory-p dir)
-							    (directory-files dir t "\\.bb\\(append\\)?\\'"))))))
+                                                            (directory-files dir t "\\.bb\\(append\\)?\\'"))))))
       (when bitbake-directory
         (let ((bitbake-file (car (directory-files bitbake-directory t "[^/_]+\\(_[^_]+\\)?\\.bb\\(append\\)?\\'"))))
           (with-temp-buffer
@@ -369,9 +369,9 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
 (defun bitbake-image-names ()
   "Return the list of available image names."
   (seq-filter (lambda (recipe)
-		(when (stringp (first recipe))
-		  (string-match-p ".*-image\\(-.*\\|$\\)" (first recipe))))
-	      (bitbake-recipes)))
+                (when (stringp (first recipe))
+                  (string-match-p ".*-image\\(-.*\\|$\\)" (first recipe))))
+              (bitbake-recipes)))
 
 (defun bitbake-read-image ()
   "Read a image name in the minibuffer, with completion."
@@ -503,8 +503,8 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
           (condition-case err
               (progn
                 (progn ,@body)
-		(bitbake-task-cleanup)
-		(bitbake-task-trigger))
+                (bitbake-task-cleanup)
+                (bitbake-task-trigger))
             (error (bitbake-reset-queue)
                    (message "Bitbake: error - %s." (error-message-string err)))))))))
 
@@ -512,9 +512,9 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
   "Maybe run next process in queue if no other task is active."
   (if bitbake-task-queue
       (unless bitbake-current-task
-	(message "Bitbake: triggering next task")
-	(display-buffer (bitbake-buffer))
-	(bitbake-task-dequeue))
+        (message "Bitbake: triggering next task")
+        (display-buffer (bitbake-buffer))
+        (bitbake-task-dequeue))
     (message "Bitbake: task queue empty")
     (remove-hook 'comint-redirect-hook 'bitbake-task-dequeue t)))
 
@@ -536,13 +536,14 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
 
 Force the task if FORCE is t."
   (interactive (let* ((recipe (bitbake-read-recipe))
-                      (task (bitbake-read-tasks recipe)))
+                      (task (bitbake-read-tasks recipe))
+                      (force prefix-arg))
                  (list task recipe force)))
-  (let ((bitbake-force (if force force bitbake-force)))
-    (bitbake-command-enqueue (recipe task)
-      (when bitbake-force
-	(bitbake-recipe-taint-task recipe task))
-      (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if bitbake-force "-f" "") task)))))
+  (let ((force (if force force bitbake-force)))
+    (bitbake-command-enqueue (recipe task force)
+      (when force
+        (bitbake-recipe-taint-task recipe task))
+      (bitbake-shell-command (format "bitbake %s %s -c %s" recipe (if force "-f" "") task)))))
 
 ;;;###autoload
 (defun bitbake-recipe (recipe)
@@ -657,7 +658,7 @@ Force the task if FORCE is t."
   (interactive (list (bitbake-read-recipe)))
   (bitbake-command-enqueue (recipe)
     (bitbake-shell-command (format "bitbake -e %s" recipe)
-			   (bitbake-get-ev-buffer))))
+                           (bitbake-get-ev-buffer))))
 
 (defun bitbake-workdir (recipe)
   "Open RECIPE workdir."
@@ -698,16 +699,16 @@ Force the task if FORCE is t."
         (last-prompt (process-mark (get-buffer-process (bitbake-buffer)))))
     (bitbake-command-enqueue (wks rootfs staging-data kernel native-sysroot deploy)
       (bitbake-shell-command (format "wic create %s -r %s -b %s -k %s -n %s -o %s"
-				     wks rootfs staging-data kernel native-sysroot deploy)))
+                                     wks rootfs staging-data kernel native-sysroot deploy)))
     (bitbake-command-enqueue ()
       (let (disk-image)
-	(with-current-buffer (bitbake-capture-buffer)
-	  (goto-char (point-min))
-	  (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
-	    (error "Unable to execute wic command, see *bitbake* for details"))
-	  (setq disk-image (match-string 1)))
-	(message "Disk image %s created" disk-image)
-	(setq bitbake-last-disk-image disk-image)))))
+        (with-current-buffer (bitbake-capture-buffer)
+          (goto-char (point-min))
+          (unless (re-search-forward "The new image(s) can be found here:\n *\\(.*\\)" nil t)
+            (error "Unable to execute wic command, see *bitbake* for details"))
+          (setq disk-image (match-string 1)))
+        (message "Disk image %s created" disk-image)
+        (setq bitbake-last-disk-image disk-image)))))
 
 ;;;###autoload
 (defun bitbake-hdd-image (wks image)
@@ -721,29 +722,29 @@ Force the task if FORCE is t."
 (defun bitbake-read-wic ()
   "Read a IMAGE in the minibuffer, with completion."
   (read-file-name "Image: "
-		  (if bitbake-image-path
-		      bitbake-image-path
-		    (concat (first (file-expand-wildcards (concat (getenv "BBPATH") "tmp*/deploy/images*") t)) "/."))
-		  nil
-		  nil
-		  nil
-		  (lambda (filename) (or (and (string-match-p "wic" filename)
-					      (string-match-p "bz2" filename))
-					 (string-match-p "/" filename)))))
+                  (if bitbake-image-path
+                      bitbake-image-path
+                    (concat (first (file-expand-wildcards (concat (getenv "BBPATH") "tmp*/deploy/images*") t)) "/."))
+                  nil
+                  nil
+                  nil
+                  (lambda (filename) (or (and (string-match-p "wic" filename)
+                                              (string-match-p "bz2" filename))
+                                         (string-match-p "/" filename)))))
 
 ;;;###autoload
 (defun bitbake-read-device ()
   "Read a DEVICE in the minibuffer, with completion."
   (read-file-name "Device: "
-		  (if bitbake-flash-device
-		      bitbake-flash-device
-		    "/dev/.")))
+                  (if bitbake-flash-device
+                      bitbake-flash-device
+                    "/dev/.")))
 
 ;;;###autoload
 (defun bitbake-flash (image device)
   "Flash IMAGE to DEVICE."
   (interactive (list (bitbake-read-wic)
-		     (bitbake-read-device)))
+                     (bitbake-read-device)))
   (with-temp-buffer
     (setq image (expand-file-name image))
     (cd "/sudo::/")
