@@ -850,8 +850,8 @@ For detail, see `comment-dwim'."
   "Indent current line as bitbake code."
   (interactive)
   (beginning-of-line)
-  (if (looking-back "\\\\\n")
-      (indent-line-to default-tab-width)
+  (if (looking-back "\\\\\n" nil)
+      (indent-line-to tab-width)
     (indent-line-to 0)))
 
 ;;;###autoload
