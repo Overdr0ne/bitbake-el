@@ -443,11 +443,26 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
     (setq bitbake-recipe-variables-cache (cons (list recipe (bitbake-fetch-recipe-variables recipe)) bitbake-recipe-variables-cache)))
   (cadr (assoc recipe bitbake-recipe-variables-cache)))
 
-(defun bitbake-recipe-variable (variable recipe &optional fetch)
+(defun bitbake-read-variable (recipe &optional fetch)
+  "Read variable for RECIPE, FETCH variables if t."
+  (completing-read (format "%s variable: " recipe)
+                   (bitbake-recipe-variables recipe bitbake-force)))
+
+(defun bitbake-recipe-variable (recipe variable &optional fetch)
   "Return the value of VARIABLE for RECIPE.
 
 If FETCH is non-nil, invalidate cache and fetch the variables again."
   (cdr (assoc variable (bitbake-recipe-variables recipe fetch))))
+
+(defun bitbake-read-recipe-variable (recipe variable)
+  (interactive (list nil nil))
+  (let* ((recipe (bitbake-read-recipe))
+         (variable (bitbake-read-variable recipe)))
+    (message (cdr (assoc variable (bitbake-recipe-variables recipe nil))))))
+
+(defun bitbake-find-recipe-workdir (recipe)
+  (interactive (list (bitbake-read-recipe)))
+  (find-file (bitbake-recipe-variable recipe "WORKDIR")))
 
 (defun bitbake-uuid ()
   "Generate a random UUID."
@@ -462,7 +477,7 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
 
 (defun bitbake-recipe-taint-task (recipe task)
   "Taint RECIPE TASK as a workarround for bitbake -f not working in server mode."
-  (let ((taint-file-name (format "%s.do_%s.taint" (bitbake-recipe-variable "STAMP" recipe) task)))
+  (let ((taint-file-name (format "%s.do_%s.taint" (bitbake-recipe-variable recipe "STAMP") task)))
     (with-temp-file taint-file-name
       (insert (bitbake-uuid)))))
 
@@ -613,7 +628,7 @@ Force the task if FORCE is t."
   "Deploy artifacts of RECIPE to bitbake-deploy-ssh host."
   (interactive (list (bitbake-read-recipe)))
   (bitbake-command-enqueue (recipe)
-    (let ((image (bitbake-recipe-variable "D" recipe)))
+    (let ((image (bitbake-recipe-variable recipe "D")))
       (message "Duma: deploying %s" recipe)
       (bitbake-shell-command (format "tar -C %s -cf - . | ssh %s tar -C / -xf -" image bitbake-deploy-ssh-host)))))
 
@@ -663,17 +678,17 @@ Force the task if FORCE is t."
 (defun bitbake-workdir (recipe)
   "Open RECIPE workdir."
   (interactive (list (bitbake-read-recipe)))
-  (find-file (bitbake-recipe-variable "WORKDIR" recipe)))
+  (find-file (bitbake-recipe-variable recipe "WORKDIR")))
 
 (defun bitbake-file (recipe)
   "Open RECIPE bitbake file."
   (interactive (list (bitbake-read-recipe)))
-  (find-file (bitbake-recipe-variable "FILE" recipe)))
+  (find-file (bitbake-recipe-variable recipe "FILE")))
 
 (defun bitbake-rootfs (image)
   "Open IMAGE root fs."
   (interactive (list (bitbake-read-image)))
-  (find-file (bitbake-recipe-variable "IMAGE_ROOTFS" image)))
+  (find-file (bitbake-recipe-variable image "IMAGE_ROOTFS")))
 
 (defun wic-read-definition-file ()
   "Read path to a wic wks definition file."
@@ -690,12 +705,12 @@ Force the task if FORCE is t."
   "Run wic WKS -e IMAGE."
   (interactive (list (wic-read-definition-file)
                      (bitbake-read-image)))
-  (let ((rootfs (bitbake-recipe-variable "IMAGE_ROOTFS" image))
-        (kernel (bitbake-recipe-variable "STAGING_KERNEL_DIR" image))
-        (hdddir (bitbake-recipe-variable "HDDDIR" image))
-        (staging-data (bitbake-recipe-variable "STAGING_DATADIR" image))
-        (native-sysroot (bitbake-recipe-variable "STAGING_DIR_NATIVE" image))
-        (deploy (bitbake-recipe-variable "DEPLOY_DIR_IMAGE" image))
+  (let ((rootfs (bitbake-recipe-variable image "IMAGE_ROOTFS"))
+        (kernel (bitbake-recipe-variable image "STAGING_KERNEL_DIR"))
+        (hdddir (bitbake-recipe-variable image "HDDDIR"))
+        (staging-data (bitbake-recipe-variable image "STAGING_DATADIR"))
+        (native-sysroot (bitbake-recipe-variable image "STAGING_DIR_NATIVE"))
+        (deploy (bitbake-recipe-variable image "DEPLOY_DIR_IMAGE"))
         (last-prompt (process-mark (get-buffer-process (bitbake-buffer)))))
     (bitbake-command-enqueue (wks rootfs staging-data kernel native-sysroot deploy)
       (bitbake-shell-command (format "wic create %s -r %s -b %s -k %s -n %s -o %s"
