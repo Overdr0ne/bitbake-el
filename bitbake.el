@@ -381,11 +381,11 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
   "Parse the list of recipe tasks in BUFFER."
   (with-current-buffer buffer
     (goto-char (point-min))
-    (when (re-search-forward ".*ERROR.*: \\(\x1b\\[..?m\\)?\\(.*\\)\\(\x1b\\[..?m\\)?" nil t)
-      (error (format "Bitbake: unable to fetch tasks - %s" (match-string 2))))
     (let ((tasks))
-      (while (re-search-forward "^do_\\([^[:blank:]\n]+\\)" nil t)
-        (setq tasks (cons (match-string 1) tasks)))
+      (while (re-search-forward "^do_" nil t)
+        (setq tasks (cons (buffer-substring (point)
+                                            (progn (forward-sexp) (point)))
+                          tasks)))
       tasks)))
 
 (defun bitbake-fetch-recipe-tasks (recipe)
