@@ -390,7 +390,7 @@ If FETCH is non-nil, invalidate cache and fetch the recipes list again."
 
 (defun bitbake-fetch-recipe-tasks (recipe)
   "Fetch the list of bitbake tasks for RECIPE."
-  (message "Bittbake: fetching recipe %s tasks" recipe)
+  (message "Bitbake: fetching recipe %s tasks" recipe)
   (with-current-buffer (bitbake-capture-buffer)
     (shell-command (format "bitbake %s -c listtasks" recipe) (bitbake-capture-buffer))
     (bitbake-parse-recipe-tasks (current-buffer))))
@@ -429,7 +429,7 @@ If FETCH is non-nil, invalidate cache and fetch the tasks again."
 
 (defun bitbake-fetch-recipe-variables (recipe)
   "Fetch bitbake variables for RECIPE."
-  (message "Bittbake: fetching recipe %s variables" recipe)
+  (message "Bitbake: fetching recipe %s variables" recipe)
   (with-temp-buffer
     (shell-command (format "bitbake -e %s 2>&1" recipe) (current-buffer))
     (bitbake-parse-recipe-variables (current-buffer))))
