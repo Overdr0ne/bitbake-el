@@ -601,7 +601,8 @@ Force the task if FORCE is t."
 (defun bitbake-fetch (recipe)
   "Run bitbake fetch on RECIPE."
   (interactive (list (bitbake-read-recipe)))
-  (bitbake-task "fetch" recipe t))
+  (bitbake-task "fetch" recipe t)
+  (bitbake-task "unpack" recipe t))
 
 ;;;###autoload
 (defun bitbake-package (recipe)
