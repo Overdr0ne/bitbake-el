@@ -1,4 +1,4 @@
-;;; bitbake.el --- Running bitbake from emacs
+;;; bitbake.el --- Running bitbake from emacs  -*- lexical-binding: t; -*-
 
 ;; Author: Damien Merenne
 ;; URL: https://github.com/canatella/bitbake-el
@@ -510,7 +510,7 @@ If FETCH is non-nil, invalidate cache and fetch the variables again."
   "Put command with VARLIST and BODY in the queue."
   (declare (indent 1))
   `(bitbake-task-enqueue
-    (lexical-let ,(mapcar (lambda (var)
+    (let ,(mapcar (lambda (var)
                             (list var var))
                           varlist)
       (lambda ()
